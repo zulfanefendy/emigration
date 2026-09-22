@@ -1,12 +1,19 @@
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: nextjs-app-digitalisasi
+    # Image dibangun di GitHub Actions lalu ditarik dari GHCR.
+    # Tidak ada build di VPS -> tidak ada lagi masalah kehabisan disk.
+    image: ${IMAGE_REF}
     restart: always
     ports:
-      # Akan otomatis membaca variabel APP_PORT dari file .env di VPS
       - "${APP_PORT:-3000}:3000"
     env_file:
       - .env
+    networks:
+      - default
+      - infra_default
+
+networks:
+  # Network milik stack Postgres di /var/www/infra.
+  # Dibutuhkan agar app bisa menghubungi host "postgres_db".
+  infra_default:
+    external: true
