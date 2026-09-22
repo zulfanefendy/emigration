@@ -1,0 +1,12 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nextjs-app-digitalisasi
+    restart: always
+    ports:
+      # Akan otomatis membaca variabel APP_PORT dari file .env di VPS
+      - "${APP_PORT:-3000}:3000"
+    env_file:
+      - .env
