@@ -1,0 +1,56 @@
+name: Deploy to VPS (Dev & Prod)
+
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Tentukan Environment Berdasarkan Branch
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "TARGET_DIR=/var/www/app-prod" >> $GITHUB_ENV
+            echo "APP_PORT=3000" >> $GITHUB_ENV
+          else
+            echo "TARGET_DIR=/var/www/app-dev" >> $GITHUB_ENV
+            echo "APP_PORT=3001" >> $GITHUB_ENV
+          fi
+
+      - name: Setup SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: "placeholder"
+
+      - name: Tambahkan VPS ke Known Hosts
+        run: ssh-keyscan -H 103.59.95.107 >> ~/.ssh/known_hosts
+
+      - name: Sync File ke VPS via Rsync
+        run: |
+          rsync -avz --exclude='.git' --exclude='node_modules' ./ root@103.59.95.107:$TARGET_DIR/
+
+      - name: Build & Restart Docker di VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: 103.59.95.107
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: TARGET_DIR,APP_PORT
+          script: |
+            cd $TARGET_DIR
+
+            # Buat file .env dinamis untuk container
+            echo "APP_PORT=$APP_PORT" > .env
+            if [ "$APP_PORT" == "3000" ]; then
+              echo "DATABASE_URL=postgresql://admin_user:PasswordSuperAman123!@127.0.0.1:5432/db_prod?schema=public" >> .env
+            else
+              echo "DATABASE_URL=postgresql://admin_user:PasswordSuperAman123!@127.0.0.1:5432/db_dev?schema=public" >> .env
+            fi
+
+            # Build ulang aplikasi dan jalankan
+            docker compose up -d --build
