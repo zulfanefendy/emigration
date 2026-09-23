@@ -5,7 +5,9 @@ services:
     image: ${IMAGE_REF}
     restart: always
     ports:
-      - "${APP_PORT:-3000}:3000"
+      # Hanya bisa diakses dari VPS sendiri; publik masuk lewat Nginx (HTTPS).
+      # Lihat deploy/nginx/31capsuta.com.conf
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
     env_file:
       - .env
     networks:

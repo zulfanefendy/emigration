@@ -1,5 +1,18 @@
-export default function Home() {
+import { connection } from "next/server";
+
+// Label badge per environment. Nilai APP_ENV & APP_DOMAIN ditulis ke .env
+// oleh workflow deploy, jadi harus dibaca saat request, bukan saat build.
+const LABEL_ENV: Record<string, string> = {
+  production: "Production",
+  development: "Development",
+};
+
+export default async function Home() {
+  await connection();
+
   const judul = "KELOMPOK A";
+  const labelEnv = LABEL_ENV[process.env.APP_ENV ?? ""] ?? "Local";
+  const domain = process.env.APP_DOMAIN ?? "localhost";
 
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-950 font-sans">
@@ -45,7 +58,7 @@ export default function Home() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
           </span>
-          Development · port 3001
+          {labelEnv} · {domain}
         </span>
       </main>
     </div>
