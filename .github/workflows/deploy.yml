@@ -73,10 +73,14 @@ jobs:
           if [ "${{ github.ref_name }}" = "main" ]; then
             echo "TARGET_DIR=/var/www/app-prod" >> $GITHUB_ENV
             echo "APP_PORT=3000" >> $GITHUB_ENV
+            echo "APP_ENV=production" >> $GITHUB_ENV
+            echo "APP_DOMAIN=31capsuta.com" >> $GITHUB_ENV
             echo "DATABASE_URL=${{ secrets.DATABASE_URL_PROD }}" >> $GITHUB_ENV
           else
             echo "TARGET_DIR=/var/www/app-dev" >> $GITHUB_ENV
             echo "APP_PORT=3001" >> $GITHUB_ENV
+            echo "APP_ENV=development" >> $GITHUB_ENV
+            echo "APP_DOMAIN=dev.31capsuta.com" >> $GITHUB_ENV
             echo "DATABASE_URL=${{ secrets.DATABASE_URL_DEV }}" >> $GITHUB_ENV
           fi
 
@@ -95,7 +99,7 @@ jobs:
           host: 103.59.95.107
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: TARGET_DIR,APP_PORT,DATABASE_URL,IMAGE_REF,GHCR_USER,GHCR_TOKEN
+          envs: TARGET_DIR,APP_PORT,APP_ENV,APP_DOMAIN,DATABASE_URL,IMAGE_REF,GHCR_USER,GHCR_TOKEN
           script_stop: true
           script: |
             set -e
@@ -107,6 +111,8 @@ jobs:
             umask 077
             cat > .env <<ENVFILE
             APP_PORT=$APP_PORT
+            APP_ENV=$APP_ENV
+            APP_DOMAIN=$APP_DOMAIN
             IMAGE_REF=$IMAGE_REF
             DATABASE_URL=$DATABASE_URL
             NODE_ENV=production
