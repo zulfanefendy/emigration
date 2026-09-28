@@ -1,7 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Skema database Sistem Verifikasi Digital CPMI & OPP (BP3MI Lampung).
+// Acuan: query_capstone_project_postgre.rtf dari PM. Nama tabel/kolom di database
+// dipertahankan snake_case (lewat @@map/@map), model Prisma memakai camelCase.
+//
+// Tambahan di luar dokumen PM (asumsi, konfirmasi ke PM):
+//   - status_verifikasi_enum: nilai 'PERLU REVISI' untuk cabang "Berkas Tidak Lengkap".
+//   - tabel peserta_opp: relasi CPMI <-> Kegiatan OPP yang dikunci saat "Lock Data CPMI".
+//   - foreign key utama di tabel anak dibuat NOT NULL (di SQL PM masih nullable).
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +14,285 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// =============================================================================
+// ENUM
+// =============================================================================
+
+enum SkemaPendaftaran {
+  P_TO_P          @map("P TO P")
+  MANDIRI_REGULER @map("MANDIRI REGULER")
+  MANDIRI_SSW     @map("MANDIRI SSW")
+
+  @@map("skema_pendaftaran_enum")
+}
+
+enum JenisKelamin {
+  L
+  P
+
+  @@map("jenis_kelamin_enum")
+}
+
+enum Sektor {
+  FORMAL
+  INFORMAL
+
+  @@map("sektor_enum")
+}
+
+enum StatusVerifikasi {
+  BELUM_DIVERIFIKASI  @map("BELUM DIVERIFIKASI")
+  SEDANG_DIVERIFIKASI @map("SEDANG DIVERIFIKASI")
+  PERLU_REVISI        @map("PERLU REVISI")
+  SUDAH_SELESAI       @map("SUDAH SELESAI")
+
+  @@map("status_verifikasi_enum")
+}
+
+enum StatusAntrian {
+  MENUNGGU
+  DIPANGGIL
+  SELESAI
+  BATAL
+
+  @@map("status_antrian_enum")
+}
+
+// =============================================================================
+// 1. PEGAWAI & ROLE (multi-role)
+// =============================================================================
+
+model Pegawai {
+  idPegawai    String   @id @default(dbgenerated("gen_random_uuid()")) @map("id_pegawai") @db.Uuid
+  nip          String   @unique @db.VarChar(18)
+  namaLengkap  String   @map("nama_lengkap") @db.VarChar(150)
+  jabatan      String?  @db.VarChar(100)
+  noWhatsapp   String?  @map("no_whatsapp") @db.VarChar(20)
+  email        String   @unique @db.VarChar(100)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  roles              PegawaiRole[]
+  verifikasi         VerifikasiCpmi[]
+  kegiatanDikelola   KegiatanOpp[]    @relation("PengelolaKelas")
+  kegiatanDitanggung KegiatanOpp[]    @relation("PenanggungJawab")
+  kurikulumDiajar    KurikulumOpp[]
+
+  @@map("pegawai")
+}
+
+model Role {
+  idRole   Int    @id @default(autoincrement()) @map("id_role")
+  // 'ADMIN', 'VERIFIKATOR', 'INSTRUKTUR', 'PENGELOLA_KELAS', 'PENANGGUNG_JAWAB'
+  namaRole String @unique @map("nama_role") @db.VarChar(50)
+
+  pegawai PegawaiRole[]
+
+  @@map("role")
+}
+
+model PegawaiRole {
+  idPegawai String @map("id_pegawai") @db.Uuid
+  idRole    Int    @map("id_role")
+
+  pegawai Pegawai @relation(fields: [idPegawai], references: [idPegawai], onDelete: Cascade)
+  role    Role    @relation(fields: [idRole], references: [idRole], onDelete: Cascade)
+
+  @@id([idPegawai, idRole])
+  @@map("pegawai_role")
+}
+
+// =============================================================================
+// 2. MATERI OPP
+// =============================================================================
+
+model MateriOpp {
+  idMateri           Int      @id @default(autoincrement()) @map("id_materi")
+  kodeMateri         String   @unique @map("kode_materi") @db.VarChar(20)
+  judulMateri        String   @map("judul_materi") @db.VarChar(200)
+  deskripsi          String?  @db.Text
+  durasiJamPelajaran Int      @default(1) @map("durasi_jam_pelajaran")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  kurikulum KurikulumOpp[]
+
+  @@map("materi_opp")
+}
+
+// =============================================================================
+// 3. CPMI & ANTRIAN
+// =============================================================================
+
+model Cpmi {
+  idCpmi              String       @id @default(dbgenerated("gen_random_uuid()")) @map("id_cpmi") @db.Uuid
+  noPaspor            String       @unique @map("no_paspor") @db.VarChar(20)
+  nik                 String?      @unique @db.VarChar(16)
+  namaLengkap         String       @map("nama_lengkap") @db.VarChar(150)
+  tempatLahir         String       @map("tempat_lahir") @db.VarChar(100)
+  tanggalLahir        DateTime     @map("tanggal_lahir") @db.Date
+  jenisKelamin        JenisKelamin @map("jenis_kelamin")
+  alamatLengkap       String       @map("alamat_lengkap") @db.Text
+  provinsi            String       @db.VarChar(100)
+  kabupatenKota       String       @map("kabupaten_kota") @db.VarChar(100)
+  noWhatsapp          String       @map("no_whatsapp") @db.VarChar(20)
+  pendidikanTerakhir  String       @map("pendidikan_terakhir") @db.VarChar(50)
+  asalSekolahInstansi String       @map("asal_sekolah_instansi") @db.VarChar(150)
+
+  // Detail penempatan
+  skemaPendaftaran   SkemaPendaftaran @map("skema_pendaftaran")
+  negaraPenempatan   String           @map("negara_penempatan") @db.VarChar(100)
+  sektor             Sektor
+  jenisPekerjaan     String           @map("jenis_pekerjaan") @db.VarChar(150)
+  namaPenggunaJasa   String           @map("nama_pengguna_jasa") @db.VarChar(150)
+  alamatPenggunaJasa String           @map("alamat_pengguna_jasa") @db.Text
+  gaji               Decimal          @db.Decimal(15, 2)
+
+  tanggalRencanaVerifikasi DateTime @map("tanggal_rencana_verifikasi") @db.Date
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  antrian    Antrian?
+  verifikasi VerifikasiCpmi[]
+  pesertaOpp PesertaOpp[]
+  presensi   PresensiOpp[]
+
+  @@map("cpmi")
+}
+
+model Antrian {
+  idAntrian      String        @id @default(dbgenerated("gen_random_uuid()")) @map("id_antrian") @db.Uuid
+  idCpmi         String        @unique @map("id_cpmi") @db.Uuid
+  noAntrian      String        @map("no_antrian") @db.VarChar(20)
+  tanggalAntrian DateTime      @default(dbgenerated("CURRENT_DATE")) @map("tanggal_antrian") @db.Date
+  statusAntrian  StatusAntrian @default(MENUNGGU) @map("status_antrian")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  cpmi Cpmi @relation(fields: [idCpmi], references: [idCpmi], onDelete: Cascade)
+
+  @@index([tanggalAntrian, statusAntrian], map: "idx_antrian_tgl_status")
+  @@map("antrian")
+}
+
+// =============================================================================
+// 4. VERIFIKASI DOKUMEN CPMI
+// =============================================================================
+
+model VerifikasiCpmi {
+  idVerifikasi           String           @id @default(dbgenerated("gen_random_uuid()")) @map("id_verifikasi") @db.Uuid
+  idCpmi                 String           @map("id_cpmi") @db.Uuid
+  idVerifikator          String?          @map("id_verifikator") @db.Uuid
+  statusVerifikasi       StatusVerifikasi @default(BELUM_DIVERIFIKASI) @map("status_verifikasi")
+  waktuMulaiVerifikasi   DateTime?        @map("waktu_mulai_verifikasi") @db.Timestamptz
+  waktuSelesaiVerifikasi DateTime?        @map("waktu_selesai_verifikasi") @db.Timestamptz
+  catatanVerifikasi      String?          @map("catatan_verifikasi") @db.Text
+  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  cpmi        Cpmi     @relation(fields: [idCpmi], references: [idCpmi], onDelete: Cascade)
+  verifikator Pegawai? @relation(fields: [idVerifikator], references: [idPegawai])
+
+  @@index([statusVerifikasi], map: "idx_verifikasi_status")
+  @@map("verifikasi_cpmi")
+}
+
+// =============================================================================
+// 5. KEGIATAN OPP & KURIKULUM
+// =============================================================================
+
+model KegiatanOpp {
+  idKegiatanOpp      String           @id @default(dbgenerated("gen_random_uuid()")) @map("id_kegiatan_opp") @db.Uuid
+  kodeKegiatan       String           @unique @map("kode_kegiatan") @db.VarChar(50)
+  tanggalPelaksanaan DateTime         @map("tanggal_pelaksanaan") @db.Date
+  skemaOpp           SkemaPendaftaran @map("skema_opp")
+  tempatOpp          String           @map("tempat_opp") @db.VarChar(255)
+
+  // Pegawai yang ditugaskan
+  idPengelolaKelas  String? @map("id_pengelola_kelas") @db.Uuid
+  idPenanggungJawab String? @map("id_penanggung_jawab") @db.Uuid
+
+  // Nomor dokumen administrasi / SK / SPT
+  noSkOpp         String? @map("no_sk_opp") @db.VarChar(100)
+  noSptInstruktur String? @map("no_spt_instruktur") @db.VarChar(100)
+  noSptPengelola  String? @map("no_spt_pengelola") @db.VarChar(100)
+
+  // Metadata SRIKANDI
+  fileSkOppUrl         String?   @map("file_sk_opp_url") @db.Text
+  fileSptInstrukturUrl String?   @map("file_spt_instruktur_url") @db.Text
+  fileSptPengelolaUrl  String?   @map("file_spt_pengelola_url") @db.Text
+  statusSrikandiUpload Boolean   @default(false) @map("status_srikandi_upload")
+  waktuUploadSrikandi  DateTime? @map("waktu_upload_srikandi") @db.Timestamptz
+
+  // Flag bahwa peserta sudah locked/final
+  isCpmiFinal Boolean  @default(false) @map("is_cpmi_final")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  pengelolaKelas  Pegawai? @relation("PengelolaKelas", fields: [idPengelolaKelas], references: [idPegawai])
+  penanggungJawab Pegawai? @relation("PenanggungJawab", fields: [idPenanggungJawab], references: [idPegawai])
+
+  kurikulum KurikulumOpp[]
+  peserta   PesertaOpp[]
+  presensi  PresensiOpp[]
+
+  @@index([tanggalPelaksanaan], map: "idx_kegiatan_tgl")
+  @@map("kegiatan_opp")
+}
+
+model KurikulumOpp {
+  idKurikulum   Int       @id @default(autoincrement()) @map("id_kurikulum")
+  idKegiatanOpp String    @map("id_kegiatan_opp") @db.Uuid
+  idMateri      Int       @map("id_materi")
+  idInstruktur  String    @map("id_instruktur") @db.Uuid
+  jamMulai      DateTime? @map("jam_mulai") @db.Time
+  jamSelesai    DateTime? @map("jam_selesai") @db.Time
+
+  kegiatan   KegiatanOpp @relation(fields: [idKegiatanOpp], references: [idKegiatanOpp], onDelete: Cascade)
+  materi     MateriOpp   @relation(fields: [idMateri], references: [idMateri])
+  instruktur Pegawai     @relation(fields: [idInstruktur], references: [idPegawai])
+
+  @@unique([idKegiatanOpp, idMateri, idInstruktur])
+  @@map("kurikulum_opp")
+}
+
+// Tambahan (bukan dari dokumen PM): daftar peserta per kegiatan OPP.
+// Diisi dari CPMI yang sudah diverifikasi; dikunci saat kegiatan_opp.is_cpmi_final = true.
+model PesertaOpp {
+  idKegiatanOpp String   @map("id_kegiatan_opp") @db.Uuid
+  idCpmi        String   @map("id_cpmi") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  kegiatan KegiatanOpp @relation(fields: [idKegiatanOpp], references: [idKegiatanOpp], onDelete: Cascade)
+  cpmi     Cpmi        @relation(fields: [idCpmi], references: [idCpmi], onDelete: Cascade)
+
+  @@id([idKegiatanOpp, idCpmi])
+  @@map("peserta_opp")
+}
+
+// =============================================================================
+// 6. PRESENSI DIGITAL & TANDA TANGAN CPMI
+// =============================================================================
+
+model PresensiOpp {
+  idPresensi    String   @id @default(dbgenerated("gen_random_uuid()")) @map("id_presensi") @db.Uuid
+  idKegiatanOpp String   @map("id_kegiatan_opp") @db.Uuid
+  idCpmi        String   @map("id_cpmi") @db.Uuid
+  waktuScan     DateTime @default(now()) @map("waktu_scan") @db.Timestamptz
+
+  // Penerimaan hak CPMI
+  statusHadir    Boolean @default(true) @map("status_hadir")
+  terimaToolkit  Boolean @default(false) @map("terima_toolkit")
+  terimaKonsumsi Boolean @default(false) @map("terima_konsumsi")
+
+  // Tanda tangan digital (base64 PNG atau URL image storage)
+  tandaTanganPng String @map("tanda_tangan_png") @db.Text
+
+  kegiatan KegiatanOpp @relation(fields: [idKegiatanOpp], references: [idKegiatanOpp], onDelete: Cascade)
+  cpmi     Cpmi        @relation(fields: [idCpmi], references: [idCpmi], onDelete: Cascade)
+
+  @@unique([idKegiatanOpp, idCpmi])
+  @@map("presensi_opp")
 }
