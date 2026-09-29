@@ -55,6 +55,14 @@ export function NavbarPublik() {
   const [menuDi, setMenuDi] = useState<string | null>(null);
   const menuBuka = menuDi === pathname;
 
+  // Datang dari halaman lain ke /#alur: Next.js kadang mencari elemen tujuan
+  // sebelum kontennya selesai dirender lalu batal scroll, jadi dibantu di sini.
+  useEffect(() => {
+    if (pathname !== "/" || !location.hash) return;
+    const id = requestAnimationFrame(() => document.getElementById(location.hash.slice(1))?.scrollIntoView());
+    return () => cancelAnimationFrame(id);
+  }, [pathname]);
+
   // Di beranda, tautan ke beranda/section cukup di-scroll halus tanpa navigasi.
   const klikTautan = useCallback(
     (e: MouseEvent<HTMLAnchorElement>, t: Tautan) => {
@@ -145,6 +153,7 @@ type PropsNav = { aktif: string | null; onKlik: (e: MouseEvent<HTMLAnchorElement
 
 /** Navigasi desktop dengan latar penanda yang bergeser halus ke tautan aktif. */
 function NavDesktop({ aktif, onKlik }: PropsNav) {
+  const refDaftar = useRef<HTMLUListElement>(null);
   const refTautan = useRef(new Map<string, HTMLAnchorElement>());
   const [posisi, setPosisi] = useState<{ x: number; lebar: number } | null>(null);
   // Posisi pertama langsung ditempatkan tanpa animasi geser dari kiri
@@ -153,11 +162,17 @@ function NavDesktop({ aktif, onKlik }: PropsNav) {
   useLayoutEffect(() => {
     const ukur = () => {
       const el = aktif ? refTautan.current.get(aktif) : undefined;
-      setPosisi(el ? { x: el.offsetLeft, lebar: el.offsetWidth } : null);
+      const daftar = refDaftar.current;
+      if (!el || !daftar) return setPosisi(null);
+      // Diukur relatif terhadap <ul>, bukan offsetLeft (yang relatif ke <li> pembungkus tautan)
+      const kotak = el.getBoundingClientRect();
+      setPosisi({ x: kotak.left - daftar.getBoundingClientRect().left, lebar: kotak.width });
     };
     ukur();
-    window.addEventListener("resize", ukur);
-    return () => window.removeEventListener("resize", ukur);
+    // Ukur ulang saat lebar menu berubah: jendela di-resize atau font selesai dimuat
+    const pengamat = new ResizeObserver(ukur);
+    if (refDaftar.current) pengamat.observe(refDaftar.current);
+    return () => pengamat.disconnect();
   }, [aktif]);
 
   useEffect(() => {
@@ -168,7 +183,7 @@ function NavDesktop({ aktif, onKlik }: PropsNav) {
 
   return (
     <nav aria-label="Navigasi utama" className="hidden flex-1 md:block">
-      <ul className="relative flex items-center gap-1">
+      <ul ref={refDaftar} className="relative flex items-center gap-1">
         <li
           aria-hidden
           className={cn(

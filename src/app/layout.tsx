@@ -21,7 +21,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: SKRIP_TEMA }} />
       </head>
-      <body className="flex min-h-full flex-col font-sans">
+      {/* Ekstensi browser (Grammarly, ColorZilla, penerjemah) sering menambah atribut
+          ke <body> sebelum React hydrate; peringatan untuk atribut body saja diabaikan. */}
+      <body suppressHydrationWarning className="flex min-h-full flex-col font-sans">
         {children}
         <Toaster />
       </body>
