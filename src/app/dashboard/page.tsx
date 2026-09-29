@@ -1,62 +1,82 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight, Palette } from "lucide-react";
+import { IKON_MENU } from "@/components/layout/ikon-menu";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { wajibLogin } from "@/lib/auth/dal";
-import { MENU_DASHBOARD } from "@/lib/auth/menu";
-import { punyaAkses } from "@/lib/auth/role";
+import { menuUntuk } from "@/lib/auth/menu";
+import { cn } from "@/lib/cn";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = { title: "Beranda" };
 
 export default async function HalamanDashboard({ searchParams }: PageProps<"/dashboard">) {
   const pegawai = await wajibLogin();
   const { akses } = await searchParams;
-  const menu = MENU_DASHBOARD.filter((m) => punyaAkses(pegawai.roles, m.roles));
+  const modul = menuUntuk(pegawai.roles).filter((m) => m.href !== "/dashboard");
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900">Selamat datang, {pegawai.namaLengkap.split(" ")[0]}</h1>
-        <p className="mt-1 text-sm text-zinc-500">Pilih modul sesuai tugas Anda.</p>
-      </div>
+    <>
+      <PageHeader
+        judul={`Selamat datang, ${pegawai.namaLengkap.split(" ")[0]}`}
+        deskripsi="Pilih modul sesuai tugas Anda."
+      />
 
       {akses === "ditolak" && (
-        <p role="alert" className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200">
+        <Alert jenis="peringatan" judul="Akses ditolak" className="mb-6">
           Anda tidak memiliki akses ke halaman tersebut.
-        </p>
+        </Alert>
       )}
 
-      {menu.length === 0 ? (
-        <p className="rounded-lg bg-white px-4 py-6 text-sm text-zinc-500 ring-1 ring-zinc-200">
+      {modul.length === 0 ? (
+        <Alert jenis="info" judul="Belum ada role">
           Akun Anda belum memiliki role. Hubungi admin untuk mendapatkan akses.
-        </p>
+        </Alert>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {menu.map((m) => {
+          {modul.map((m) => {
+            const Ikon = IKON_MENU[m.ikon];
             const isi = (
               <>
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-semibold text-zinc-900">{m.judul}</h2>
-                  {!m.tersedia && (
-                    <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-500">
-                      Segera
-                    </span>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="flex size-11 items-center justify-center rounded-xl bg-brand-soft text-brand-text">
+                    <Ikon className="size-5" aria-hidden />
+                  </span>
+                  {m.tersedia ? (
+                    <ArrowRight className="size-5 text-fg-subtle transition-transform group-hover:translate-x-0.5" aria-hidden />
+                  ) : (
+                    <Badge>Segera</Badge>
                   )}
                 </div>
-                <p className="mt-1.5 text-sm text-zinc-500">{m.deskripsi}</p>
+                <h2 className="mt-4 font-semibold text-fg">{m.judul}</h2>
+                <p className="mt-1 text-sm text-fg-muted">{m.deskripsi}</p>
               </>
             );
-            const kelas = "rounded-xl bg-white p-5 ring-1 ring-zinc-200";
+            const kelas = "group block p-5";
             return m.tersedia ? (
-              <Link key={m.href} href={m.href} className={`${kelas} transition hover:ring-sky-600`}>
-                {isi}
+              <Link key={m.href} href={m.href} className="rounded-xl focus-visible:ring-4 focus-visible:ring-ring focus-visible:outline-none">
+                <Card className={cn(kelas, "h-full transition hover:border-brand-text/50 hover:shadow-md")}>{isi}</Card>
               </Link>
             ) : (
-              <div key={m.href} className={`${kelas} opacity-70`}>
+              <Card key={m.href} className={cn(kelas, "border-dashed")}>
                 {isi}
-              </div>
+              </Card>
             );
           })}
         </div>
       )}
-    </div>
+
+      {process.env.APP_ENV !== "production" && (
+        <Link
+          href="/dashboard/ui-kit"
+          className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-brand-text hover:underline"
+        >
+          <Palette className="size-4" aria-hidden />
+          Lihat UI Kit (tidak tampil di server produksi)
+        </Link>
+      )}
+    </>
   );
 }

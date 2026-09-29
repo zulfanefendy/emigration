@@ -1,83 +1,159 @@
 @import "tailwindcss";
 
+/*
+ * Tema aplikasi. Palet mengacu pada evisa.imigrasi.go.id:
+ * navy #11375C (utama), emas #FBB934 (aksen), oranye #F17425, teks #212529.
+ *
+ * Semua komponen memakai token semantik (bg-surface, text-fg, border-input, ...),
+ * bukan warna mentah, sehingga mode gelap cukup mengganti nilai variabel di bawah.
+ * Tema dipilih lewat atribut <html data-theme="light|dark"> (lihat components/theme).
+ * Kontras teks utama/sekunder/placeholder sudah dicek >= 4.5:1 (WCAG AA),
+ * border input >= 3:1 terhadap latarnya.
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --background: #f3f6f9;
+  --surface: #ffffff;
+  --surface-muted: #ecf1f5;
+  --fg: #212529;
+  --fg-muted: #4a5563;
+  --fg-subtle: #5f6b7a;
+  --border: #d5dde5;
+  --input: #ffffff;
+  --input-border: #7b8794;
+  --input-readonly: #ecf1f5;
+
+  --brand: #11375c;
+  --brand-hover: #0b2742;
+  --brand-fg: #ffffff;
+  --brand-soft: #e6eef6;
+  --brand-text: #11375c;
+  --ring: rgb(17 55 92 / 0.28);
+
+  --aksen: #fbb934;
+  --aksen-fg: #212529;
+  --oranye: #f17425;
+
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+  --success: #067647;
+  --success-soft: #ecfdf3;
+  --warning: #93370d;
+  --warning-soft: #fffaeb;
+
+  --sidebar: #11375c;
+  --sidebar-fg: #d3e0ec;
+  --sidebar-fg-active: #ffffff;
+  --sidebar-hover: rgb(255 255 255 / 0.08);
+  --sidebar-border: rgb(255 255 255 / 0.12);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #0b1420;
+  --surface: #121e2d;
+  --surface-muted: #1a2838;
+  --fg: #e7edf3;
+  --fg-muted: #b3c0cd;
+  --fg-subtle: #97a6b6;
+  --border: #26364a;
+  --input: #0e1825;
+  --input-border: #6a7d93;
+  --input-readonly: #1a2838;
+
+  --brand: #2a67a3;
+  --brand-hover: #3474b3;
+  --brand-fg: #ffffff;
+  --brand-soft: #16304d;
+  --brand-text: #8fc3f2;
+  --ring: rgb(143 195 242 / 0.35);
+
+  --aksen: #fbb934;
+  --aksen-fg: #212529;
+  --oranye: #f5894a;
+
+  --danger: #fd9b91;
+  --danger-soft: #3a1714;
+  --success: #6ce0a6;
+  --success-soft: #0f2f22;
+  --warning: #fdc56d;
+  --warning-soft: #33250e;
+
+  --sidebar: #0a2340;
+  --sidebar-fg: #c3d3e3;
+  --sidebar-fg-active: #ffffff;
+  --sidebar-hover: rgb(255 255 255 / 0.07);
+  --sidebar-border: rgb(255 255 255 / 0.1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-border: var(--input-border);
+  --color-input-readonly: var(--input-readonly);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-text: var(--brand-text);
+  --color-ring: var(--ring);
+
+  --color-aksen: var(--aksen);
+  --color-aksen-fg: var(--aksen-fg);
+  --color-oranye: var(--oranye);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-fg-active: var(--sidebar-fg-active);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-border: var(--sidebar-border);
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--fg);
 }
 
-/* --- Animasi halaman utama --- */
-@keyframes fade-up {
+@keyframes toast-masuk {
   from {
     opacity: 0;
-    transform: translateY(1.5rem);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: translateY(-0.5rem) scale(0.98);
   }
 }
 
-@keyframes shimmer {
-  to {
-    background-position: 200% center;
+@keyframes modal-masuk {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
   }
 }
 
-@keyframes float-slow {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(2rem, -2rem) scale(1.12);
-  }
-}
-
-.animate-fade-up {
-  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.animate-shimmer {
-  animation:
-    fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    shimmer 4s linear infinite 1.5s;
-}
-
-.animate-float-slow {
-  animation: float-slow 14s ease-in-out infinite;
-}
-
-.animate-float-slower {
-  animation: float-slow 20s ease-in-out infinite reverse;
-}
-
-/* Hormati preferensi pengguna yang mematikan animasi */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-up,
-  .animate-shimmer,
-  .animate-float-slow,
-  .animate-float-slower {
-    animation: none;
-    opacity: 1;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
   }
 }
