@@ -18,6 +18,7 @@ jobs:
       packages: write
     outputs:
       image_ref: ${{ steps.meta.outputs.image_ref }}
+      migrate_image_ref: ${{ steps.meta.outputs.migrate_image_ref }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -32,6 +33,7 @@ jobs:
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "image_ref=${IMAGE_NAME}:${TAG}" >> "$GITHUB_OUTPUT"
+          echo "migrate_image_ref=${IMAGE_NAME}:${TAG}-migrate" >> "$GITHUB_OUTPUT"
 
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v3
@@ -52,6 +54,16 @@ jobs:
             ${{ steps.meta.outputs.image_ref }}
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
           # Cache layer disimpan di GitHub, bukan di VPS
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & Push Image Migrasi
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: migrator
+          push: true
+          tags: ${{ steps.meta.outputs.migrate_image_ref }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -76,12 +88,14 @@ jobs:
             echo "APP_ENV=production" >> $GITHUB_ENV
             echo "APP_DOMAIN=31capsuta.com" >> $GITHUB_ENV
             echo "DATABASE_URL=${{ secrets.DATABASE_URL_PROD }}" >> $GITHUB_ENV
+            echo "SESSION_SECRET=${{ secrets.SESSION_SECRET_PROD }}" >> $GITHUB_ENV
           else
             echo "TARGET_DIR=/var/www/app-dev" >> $GITHUB_ENV
             echo "APP_PORT=3001" >> $GITHUB_ENV
             echo "APP_ENV=development" >> $GITHUB_ENV
             echo "APP_DOMAIN=dev.31capsuta.com" >> $GITHUB_ENV
             echo "DATABASE_URL=${{ secrets.DATABASE_URL_DEV }}" >> $GITHUB_ENV
+            echo "SESSION_SECRET=${{ secrets.SESSION_SECRET_DEV }}" >> $GITHUB_ENV
           fi
 
       - name: Kirim docker-compose.yml ke VPS
@@ -99,7 +113,7 @@ jobs:
           host: 103.59.95.107
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: TARGET_DIR,APP_PORT,APP_ENV,APP_DOMAIN,DATABASE_URL,IMAGE_REF,GHCR_USER,GHCR_TOKEN
+          envs: TARGET_DIR,APP_PORT,APP_ENV,APP_DOMAIN,DATABASE_URL,SESSION_SECRET,SEED_ADMIN_EMAIL,SEED_ADMIN_PASSWORD,IMAGE_REF,MIGRATE_IMAGE_REF,GHCR_USER,GHCR_TOKEN
           script_stop: true
           script: |
             set -e
@@ -114,11 +128,19 @@ jobs:
             APP_ENV=$APP_ENV
             APP_DOMAIN=$APP_DOMAIN
             IMAGE_REF=$IMAGE_REF
+            MIGRATE_IMAGE_REF=$MIGRATE_IMAGE_REF
             DATABASE_URL=$DATABASE_URL
+            SESSION_SECRET=$SESSION_SECRET
+            SEED_ADMIN_EMAIL=$SEED_ADMIN_EMAIL
+            SEED_ADMIN_PASSWORD=$SEED_ADMIN_PASSWORD
             NODE_ENV=production
             ENVFILE
 
-            docker compose pull
+            docker compose --profile migrate pull
+
+            # Skema DB harus sudah terbaru sebelum versi web yang baru jalan
+            docker compose --profile migrate run --rm migrate
+
             docker compose up -d --remove-orphans
 
             # Jaga disk VPS tetap lega
@@ -126,5 +148,8 @@ jobs:
             docker logout ghcr.io
         env:
           IMAGE_REF: ${{ needs.build.outputs.image_ref }}
+          MIGRATE_IMAGE_REF: ${{ needs.build.outputs.migrate_image_ref }}
+          SEED_ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
+          SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -14,6 +14,17 @@ services:
       - default
       - infra_default
 
+  # Menjalankan migrasi + seed sebelum web di-restart:
+  #   docker compose --profile migrate run --rm migrate
+  migrate:
+    image: ${MIGRATE_IMAGE_REF}
+    profiles: ["migrate"]
+    restart: "no"
+    env_file:
+      - .env
+    networks:
+      - infra_default
+
 networks:
   # Network milik stack Postgres di /var/www/infra.
   # Dibutuhkan agar app bisa menghubungi host "postgres_db".

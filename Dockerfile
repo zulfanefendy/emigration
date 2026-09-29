@@ -17,7 +17,16 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-# 3. Production image
+# 3. Image migrasi: prisma migrate deploy + seed (dijalankan sekali tiap deploy)
+FROM base AS migrator
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json prisma.config.ts ./
+COPY prisma ./prisma/
+RUN npx prisma generate
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed"]
+
+# 4. Production image
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV production
