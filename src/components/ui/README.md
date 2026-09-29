@@ -61,3 +61,38 @@ if (await konfirmasi({ judul: "Hapus pegawai?", bahaya: true })) { ... }
 1. Buat `src/app/dashboard/<modul>/page.tsx`, panggil `await wajibRole("ROLE")` di awal.
 2. Mulai dengan `<PageHeader judul="..." aksi={...} />`.
 3. Set `tersedia: true` untuk menu tersebut di `src/lib/auth/menu.ts`.
+
+## Animasi
+Semua gerakan memakai satu kurva (`ease-halus`) dan durasi yang sama agar terasa seragam.
+Pengguna yang mengaktifkan "kurangi gerakan" di sistem operasinya otomatis tidak melihat animasi.
+
+Yang sudah otomatis, tidak perlu ditambahkan lagi:
+- **Pindah halaman**: `template.tsx` di `(publik)` dan `dashboard` memutar `animate-masuk` pada konten.
+- **Memuat halaman dashboard**: `dashboard/loading.tsx` menampilkan skeleton selagi data diambil.
+  Halaman yang tata letaknya sangat berbeda boleh punya `loading.tsx` sendiri di foldernya.
+- **Tautan `#anchor`**: scroll halus (lihat `globals.css`).
+
+Yang dipakai saat membuat halaman atau fitur baru:
+
+```tsx
+// Muncul saat pertama kali masuk layar (bagian halaman panjang, daftar kartu)
+import { Muncul } from "@/components/muncul";
+<Muncul>...</Muncul>
+{items.map((x, i) => <Muncul key={x.id} as="li" tunda={i * 80}>...</Muncul>)}
+
+// Muncul saat halaman dibuka, berurutan
+<div className="animate-masuk [animation-delay:120ms]">...</div>
+
+// Kartu yang bisa diklik: terangkat sedikit saat hover
+<Card className="transition duration-300 ease-halus hover:-translate-y-0.5 hover:shadow-md">
+
+// Placeholder data yang sedang dimuat
+import { Skeleton } from "@/components/ui/skeleton";
+<Skeleton className="h-4 w-40" />
+```
+
+Batasan:
+- Jangan animasikan `width`, `height`, `top`, atau `left`. Pakai `transform` dan `opacity` supaya tetap mulus di HP.
+  Untuk membuka/menutup tinggi, pakai trik `grid-rows-[0fr]` ke `grid-rows-[1fr]` (contoh: menu mobile di `navbar-publik.tsx`).
+- Durasi 150 sampai 300 ms untuk hover dan klik, 400 sampai 650 ms untuk konten yang masuk. Lebih lama akan terasa lambat.
+- Jangan memberi animasi masuk pada tabel atau form yang sering dibuka ulang. Cukup animasi halaman dari template.

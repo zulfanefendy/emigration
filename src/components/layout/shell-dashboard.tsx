@@ -125,7 +125,7 @@ export function ShellDashboard({ menu, namaPegawai, labelRole, aksiLogout, child
 function ItemMenu({ menu, aktif }: { menu: MenuDashboard; aktif: boolean }) {
   const Ikon = IKON_MENU[menu.ikon];
   const kelas = cn(
-    "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+    "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200",
     aktif ? "bg-sidebar-hover text-sidebar-fg-active" : "text-sidebar-fg",
   );
 
@@ -143,10 +143,19 @@ function ItemMenu({ menu, aktif }: { menu: MenuDashboard; aktif: boolean }) {
     <Link
       href={menu.href}
       aria-current={aktif ? "page" : undefined}
-      className={cn(kelas, "hover:bg-sidebar-hover hover:text-sidebar-fg-active focus-visible:ring-2 focus-visible:ring-aksen focus-visible:outline-none")}
+      className={cn(kelas, "group hover:bg-sidebar-hover hover:text-sidebar-fg-active focus-visible:ring-2 focus-visible:ring-aksen focus-visible:outline-none")}
     >
-      {aktif && <span aria-hidden className="absolute inset-y-1.5 left-0 w-1 rounded-r-full bg-aksen" />}
-      <Ikon className={cn("size-[18px] shrink-0", aktif && "text-aksen")} aria-hidden />
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-y-1.5 left-0 w-1 origin-center rounded-r-full bg-aksen transition-transform duration-300 ease-halus",
+          aktif ? "scale-y-100" : "scale-y-0",
+        )}
+      />
+      <Ikon
+        className={cn("size-[18px] shrink-0 transition-colors duration-200", aktif ? "text-aksen" : "group-hover:text-sidebar-fg-active")}
+        aria-hidden
+      />
       <span className="flex-1">{menu.judul}</span>
     </Link>
   );

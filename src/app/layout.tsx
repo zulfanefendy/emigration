@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // data-theme diisi SKRIP_TEMA sebelum hydrate, jadi atributnya memang bisa berbeda dari HTML server.
-    <html lang="id" data-theme="light" suppressHydrationWarning className={`${inter.variable} h-full antialiased`}>
+    <html lang="id" data-theme="light" data-scroll-behavior="smooth" suppressHydrationWarning className={`${inter.variable} h-full antialiased`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SKRIP_TEMA }} />
       </head>

@@ -36,7 +36,7 @@ export default async function HalamanDashboard({ searchParams }: PageProps<"/das
         </Alert>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {modul.map((m) => {
+          {modul.map((m, i) => {
             const Ikon = IKON_MENU[m.ikon];
             const isi = (
               <>
@@ -55,12 +55,20 @@ export default async function HalamanDashboard({ searchParams }: PageProps<"/das
               </>
             );
             const kelas = "group block p-5";
+            const tunda = { animationDelay: `${80 + i * 60}ms` };
             return m.tersedia ? (
-              <Link key={m.href} href={m.href} className="rounded-xl focus-visible:ring-4 focus-visible:ring-ring focus-visible:outline-none">
-                <Card className={cn(kelas, "h-full transition hover:border-brand-text/50 hover:shadow-md")}>{isi}</Card>
+              <Link
+                key={m.href}
+                href={m.href}
+                style={tunda}
+                className="animate-masuk rounded-xl focus-visible:ring-4 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <Card className={cn(kelas, "h-full transition duration-300 ease-halus hover:-translate-y-0.5 hover:border-brand-text/50 hover:shadow-md")}>
+                  {isi}
+                </Card>
               </Link>
             ) : (
-              <Card key={m.href} className={cn(kelas, "border-dashed")}>
+              <Card key={m.href} style={tunda} className={cn(kelas, "animate-masuk border-dashed")}>
                 {isi}
               </Card>
             );

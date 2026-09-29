@@ -135,6 +135,56 @@ body {
   color: var(--fg);
 }
 
+/*
+ * Animasi. Semua gerakan memakai kurva dan durasi yang sama agar terasa satu
+ * kesatuan. Pakai lewat utility Tailwind: animate-masuk, animate-muncul, dst.
+ * Panduan: src/components/ui/README.md bagian "Animasi".
+ */
+@theme {
+  --ease-halus: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-masuk: masuk 420ms var(--ease-halus) backwards;
+  --animate-masuk-lambat: masuk 640ms var(--ease-halus) backwards;
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+
+  @keyframes masuk {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+  }
+  @keyframes shimmer {
+    50% {
+      opacity: 0.55;
+    }
+  }
+}
+
+/* Scroll halus untuk tautan #anchor. data-scroll-behavior di <html> membuat
+   Next.js mematikannya sementara saat pindah halaman, jadi halaman baru tetap
+   langsung mulai dari atas. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* <Muncul>: elemen tampil perlahan saat masuk layar. Hanya disembunyikan bila
+   JavaScript aktif, supaya konten tetap terlihat walau skrip gagal dimuat. */
+@media (scripting: enabled) {
+  [data-muncul] {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    transition:
+      opacity 600ms var(--ease-halus),
+      transform 600ms var(--ease-halus);
+    transition-delay: var(--tunda, 0ms);
+  }
+  [data-muncul="ya"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @keyframes toast-masuk {
   from {
     opacity: 0;
@@ -155,5 +205,7 @@ body {
   *::after {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-delay: 0ms !important;
   }
 }
