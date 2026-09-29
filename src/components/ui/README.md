@@ -44,6 +44,15 @@ if (await konfirmasi({ judul: "Hapus pegawai?", bahaya: true })) { ... }
   ...isi form...
 </Modal>
 
+// Tabel data (bungkus dengan <Card>)
+<Table><THead><tr><Th>Nama</Th></tr></THead>
+  <tbody>{baris.length ? baris.map(b => <Tr key={b.id}><Td>{b.nama}</Td></Tr>) : <TableKosong kolom={1}>Belum ada data.</TableKosong>}</tbody>
+</Table>
+
+// Form di modal: pakai onSubmit + startTransition(() => action(formData)),
+// bukan action={...}, agar isian tidak dikosongkan saat validasi gagal.
+// Contoh lengkap: src/app/dashboard/materi/daftar-materi.tsx
+
 // Badge status domain
 <BadgeStatusVerifikasi status={v.statusVerifikasi} />   // dari "@/components/status"
 ```

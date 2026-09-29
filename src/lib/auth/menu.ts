@@ -55,7 +55,7 @@ export const MENU_DASHBOARD: MenuDashboard[] = [
     deskripsi: "Kelola daftar materi dan durasi jam pelajaran.",
     ikon: "materi",
     roles: ["PENGELOLA_KELAS"],
-    tersedia: false,
+    tersedia: true,
   },
   {
     href: "/dashboard/pegawai",
@@ -63,7 +63,7 @@ export const MENU_DASHBOARD: MenuDashboard[] = [
     deskripsi: "Kelola akun pegawai dan hak aksesnya.",
     ikon: "pegawai",
     roles: ["ADMIN"],
-    tersedia: false,
+    tersedia: true,
   },
 ];
 
