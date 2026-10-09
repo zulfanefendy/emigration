@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 
 const PG_BIN = process.env.PG_BIN ?? "C:/Program Files/PostgreSQL/17/bin";
-const DATA_DIR = path.resolve(import.meta.dirname, "../../pgdata-emigration");
+const DATA_DIR = process.env.PG_DATA ?? path.resolve(import.meta.dirname, "../../pgdata-emigration");
 const PORT = 5433;
 
 const perintah = process.argv[2];

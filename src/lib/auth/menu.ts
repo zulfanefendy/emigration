@@ -4,7 +4,7 @@ import { punyaAkses, type Role } from "./role";
 // `tersedia: false` = modul belum dibuat; ubah saat halamannya sudah ada.
 // `ikon` adalah kunci di components/layout/ikon-menu.ts (bukan komponen, karena
 // menu dikirim dari server ke komponen client).
-export type KunciIkonMenu = "beranda" | "verifikasi" | "kegiatan" | "jadwal" | "materi" | "pegawai";
+export type KunciIkonMenu = "beranda" | "verifikasi" | "kegiatan" | "laporan" | "jadwal" | "materi" | "pegawai";
 
 export type MenuDashboard = {
   href: string;
@@ -31,7 +31,7 @@ export const MENU_DASHBOARD: MenuDashboard[] = [
     deskripsi: "Daftar antrean hari ini, panggil CPMI, verifikasi berkas fisik.",
     ikon: "verifikasi",
     roles: ["VERIFIKATOR"],
-    tersedia: false,
+    tersedia: true,
   },
   {
     href: "/dashboard/kegiatan-opp",
@@ -39,7 +39,15 @@ export const MENU_DASHBOARD: MenuDashboard[] = [
     deskripsi: "Buat kegiatan, atur kurikulum, SK & SPT, QR presensi, LPJ, SRIKANDI.",
     ikon: "kegiatan",
     roles: ["PENGELOLA_KELAS", "PENANGGUNG_JAWAB"],
-    tersedia: false,
+    tersedia: true,
+  },
+  {
+    href: "/dashboard/laporan-harian",
+    judul: "Laporan Harian",
+    deskripsi: "Rekap loket dan kegiatan OPP per hari, kirim lewat WhatsApp.",
+    ikon: "laporan",
+    roles: ["PENGELOLA_KELAS", "PENANGGUNG_JAWAB"],
+    tersedia: true,
   },
   {
     href: "/dashboard/jadwal-mengajar",
@@ -47,7 +55,7 @@ export const MENU_DASHBOARD: MenuDashboard[] = [
     deskripsi: "Materi dan jadwal OPP yang ditugaskan kepada Anda.",
     ikon: "jadwal",
     roles: ["INSTRUKTUR"],
-    tersedia: false,
+    tersedia: true,
   },
   {
     href: "/dashboard/materi",

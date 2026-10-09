@@ -77,7 +77,7 @@ export function NavbarPublik() {
   );
 
   return (
-    <header className="sticky top-0 z-30 bg-sidebar text-white shadow-sm">
+    <header className="sticky top-0 z-30 bg-sidebar text-white shadow-sm print:hidden">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
         <Link href="/" className="rounded-md focus-visible:ring-2 focus-visible:ring-aksen focus-visible:outline-none">
           <Logo terang />
