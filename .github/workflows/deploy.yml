@@ -21,7 +21,7 @@ jobs:
       migrate_image_ref: ${{ steps.meta.outputs.migrate_image_ref }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Tentukan Tag Berdasarkan Branch
         id: meta
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Tentukan Environment Berdasarkan Branch
         run: |
@@ -114,7 +114,6 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: TARGET_DIR,APP_PORT,APP_ENV,APP_DOMAIN,DATABASE_URL,SESSION_SECRET,SEED_ADMIN_EMAIL,SEED_ADMIN_PASSWORD,IMAGE_REF,MIGRATE_IMAGE_REF,GHCR_USER,GHCR_TOKEN
-          script_stop: true
           script: |
             set -e
             cd "$TARGET_DIR"
