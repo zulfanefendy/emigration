@@ -9,7 +9,7 @@ export async function FooterPublik() {
   const labelEnv = LABEL_ENV[process.env.APP_ENV ?? ""] ?? "Local";
 
   return (
-    <footer className="bg-sidebar text-sidebar-fg">
+    <footer className="bg-sidebar text-sidebar-fg print:hidden">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between">
         <div>
           <Logo terang />
