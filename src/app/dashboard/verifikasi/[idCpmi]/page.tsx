@@ -57,7 +57,7 @@ export default async function HalamanDetailVerifikasi({ params }: PageProps<"/da
         ["Jenis Pekerjaan", cpmi.jenisPekerjaan],
         ["Pengguna Jasa", cpmi.namaPenggunaJasa],
         ["Alamat Pengguna Jasa", cpmi.alamatPenggunaJasa],
-        ["Gaji per Bulan", Number(cpmi.gaji).toLocaleString("id-ID")],
+        ["Gaji per Bulan", cpmi.gaji],
       ],
     },
   ];

@@ -1,5 +1,5 @@
 import "server-only";
-import { LABEL_SKEMA } from "@/app/(publik)/pendaftaran/pilihan";
+import { LABEL_SKEMA_OPP } from "@/app/(publik)/pendaftaran/pilihan";
 import { prisma } from "@/lib/prisma";
 import { formatTanggal, formatWaktu, keTanggalDb } from "@/lib/tanggal";
 
@@ -56,7 +56,7 @@ export async function rekapHarian(tanggal: string): Promise<RekapHarian> {
     loket,
     kegiatan: kegiatan.map((k) => ({
       kodeKegiatan: k.kodeKegiatan,
-      skema: LABEL_SKEMA[k.skemaOpp],
+      skema: LABEL_SKEMA_OPP[k.skemaOpp],
       tempat: k.tempatOpp,
       peserta: k._count.peserta,
       hadir: k.presensi.length,

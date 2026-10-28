@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import QRCode from "qrcode";
 import { ButtonLink } from "@/components/ui/button";
-import { LABEL_SKEMA } from "@/app/(publik)/pendaftaran/pilihan";
+import { LABEL_SKEMA_OPP } from "@/app/(publik)/pendaftaran/pilihan";
 import { wajibRole } from "@/lib/auth/dal";
-import { kodeQr } from "@/lib/presensi-token";
+import { kodeQr, kodeTautan } from "@/lib/presensi-token";
 import { formatTanggal } from "@/lib/tanggal";
 import { ambilKegiatan, tahapKegiatan } from "../../data";
 import { LayarQr } from "./layar-qr";
@@ -27,7 +27,9 @@ export default async function HalamanQrPresensi({ params }: PageProps<"/dashboar
   if (!k) notFound();
 
   // Kode berganti tiap menit; LayarQr me-refresh halaman agar QR ikut berganti.
-  const url = `${await alamatAsal()}/presensi/${k.idKegiatanOpp}?k=${kodeQr(k.idKegiatanOpp)}`;
+  const asal = await alamatAsal();
+  const url = `${asal}/presensi/${k.idKegiatanOpp}?k=${kodeQr(k.idKegiatanOpp)}`;
+  const tautan = `${asal}/presensi/${k.idKegiatanOpp}?t=${kodeTautan(k.idKegiatanOpp)}`;
   const svg = await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" });
   const tahap = tahapKegiatan(k);
 
@@ -38,8 +40,9 @@ export default async function HalamanQrPresensi({ params }: PageProps<"/dashboar
       </ButtonLink>
       <LayarQr
         svg={svg}
+        tautan={tautan}
         kodeKegiatan={k.kodeKegiatan}
-        judul={`OPP ${LABEL_SKEMA[k.skemaOpp]}`}
+        judul={`OPP ${LABEL_SKEMA_OPP[k.skemaOpp]}`}
         keterangan={`${formatTanggal(k.tanggalPelaksanaan)} · ${k.tempatOpp}`}
         jumlahPeserta={k.peserta.length}
         jumlahPresensi={k._count.presensi}

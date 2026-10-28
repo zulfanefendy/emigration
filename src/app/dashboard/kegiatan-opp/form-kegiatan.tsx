@@ -2,14 +2,14 @@
 
 import { Save } from "lucide-react";
 import { startTransition, useActionState, useEffect } from "react";
-import type { SkemaPendaftaran } from "@/generated/prisma/enums";
+import type { SkemaOpp } from "@/generated/prisma/enums";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, idPesanField } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { toast } from "@/components/ui/toast";
-import { LABEL_SKEMA } from "@/app/(publik)/pendaftaran/pilihan";
+import { LABEL_SKEMA_OPP, MENIT_PER_JP } from "@/app/(publik)/pendaftaran/pilihan";
 import { simpanKegiatan } from "./actions";
 
 export type OpsiPegawai = { idPegawai: string; namaLengkap: string; nip: string };
@@ -18,7 +18,7 @@ export type IsianKegiatan = {
   idKegiatanOpp: string;
   kodeKegiatan: string;
   tanggalPelaksanaan: string;
-  skemaOpp: SkemaPendaftaran;
+  skemaOpp: SkemaOpp;
   tempatOpp: string;
   idPengelolaKelas: string | null;
   idPenanggungJawab: string | null;
@@ -92,14 +92,14 @@ export function ModalKegiatan({ kegiatan, pengelola, penanggungJawab, hariIni, o
               {...kontrol("tanggalPelaksanaan", e?.tanggalPelaksanaan)}
             />
           </Field>
-          <Field htmlFor="skemaOpp" label="Skema OPP" wajib error={e?.skemaOpp} hint="Hanya CPMI dengan skema ini yang bisa jadi peserta.">
+          <Field htmlFor="skemaOpp" label="Skema OPP" wajib error={e?.skemaOpp} hint="Mandiri mencakup CPMI Mandiri Reguler dan Mandiri SSW.">
             <Select defaultValue={kegiatan?.skemaOpp ?? ""} {...kontrol("skemaOpp", e?.skemaOpp)}>
               <option value="" disabled>
                 Pilih skema
               </option>
-              {Object.entries(LABEL_SKEMA).map(([nilai, label]) => (
+              {Object.entries(LABEL_SKEMA_OPP).map(([nilai, label]) => (
                 <option key={nilai} value={nilai}>
-                  {label}
+                  {label} ({MENIT_PER_JP[nilai as SkemaOpp]} menit/JP)
                 </option>
               ))}
             </Select>

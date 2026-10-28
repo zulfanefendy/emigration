@@ -1,14 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Maximize } from "lucide-react";
+import { Copy, Link2, Maximize, Share2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button, kelasTombol } from "@/components/ui/button";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { toast } from "@/components/ui/toast";
 
 type Props = {
   svg: string;
+  /** Tautan cadangan untuk peserta yang tidak bisa memindai QR. */
+  tautan: string;
   kodeKegiatan: string;
   judul: string;
   keterangan: string;
@@ -61,6 +64,53 @@ export function LayarQr(p: Props) {
           Layar Penuh
         </Button>
       </div>
+      <TautanPresensi tautan={p.tautan} judul={`Presensi ${p.judul} (${p.kodeKegiatan})`} />
     </div>
+  );
+}
+
+/** Tautan presensi cadangan untuk dibagikan lewat WhatsApp bila peserta tidak bisa memindai QR. */
+function TautanPresensi({ tautan, judul }: { tautan: string; judul: string }) {
+  async function salin() {
+    try {
+      await navigator.clipboard.writeText(tautan);
+      toast.sukses("Tautan presensi disalin.");
+    } catch {
+      toast.gagal("Gagal menyalin. Salin tautan secara manual.");
+    }
+  }
+
+  const pesanWa = `${judul}
+Silakan isi presensi lewat tautan berikut (hanya hari ini):
+${tautan}`;
+
+  return (
+    <Card>
+      <CardHeader
+        judul={
+          <span className="inline-flex items-center gap-2">
+            <Link2 className="size-4" aria-hidden /> Tautan Presensi
+          </span>
+        }
+        deskripsi="Untuk peserta yang tidak bisa memindai QR. Tautan hanya berlaku pada hari pelaksanaan, dan hanya CPMI peserta kegiatan ini yang bisa presensi."
+      />
+      <CardBody className="flex flex-col gap-3">
+        <p className="rounded-lg border border-border bg-surface-muted px-3 py-2 font-mono text-xs break-all text-fg">{tautan}</p>
+        <div className="flex flex-wrap gap-2">
+          <Button varian="outline" ukuran="sm" ikon={<Copy />} onClick={salin}>
+            Salin Tautan
+          </Button>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(pesanWa)}`}
+            target="_blank"
+            rel="noreferrer"
+            className={kelasTombol("outline", "sm")}
+          >
+            <Share2 aria-hidden />
+            Bagikan ke WhatsApp
+          </a>
+        </div>
+      </CardBody>
+    </Card>
   );
 }

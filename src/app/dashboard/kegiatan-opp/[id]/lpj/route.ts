@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { LABEL_SKEMA } from "@/app/(publik)/pendaftaran/pilihan";
+import { LABEL_SKEMA_OPP } from "@/app/(publik)/pendaftaran/pilihan";
 import { wajibRole } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
 import { dariJamDb, formatJam, formatTanggal, formatWaktu } from "@/lib/tanggal";
@@ -68,7 +68,7 @@ export async function GET(_req: Request, { params }: RouteContext<"/dashboard/ke
     ["Kode Kegiatan", k.kodeKegiatan],
     ["Tanggal Pelaksanaan", formatTanggal(k.tanggalPelaksanaan)],
     ["Tempat", k.tempatOpp],
-    ["Skema", LABEL_SKEMA[k.skemaOpp]],
+    ["Skema", LABEL_SKEMA_OPP[k.skemaOpp]],
     ["Penanggung Jawab", k.penanggungJawab?.namaLengkap ?? "-"],
     ["Pengelola Kelas", k.pengelolaKelas?.namaLengkap ?? "-"],
     ["No. SK OPP", k.noSkOpp ?? "-"],

@@ -17,6 +17,7 @@ export default async function HalamanPegawai() {
       nip: true,
       namaLengkap: true,
       jabatan: true,
+      pangkatGolongan: true,
       noWhatsapp: true,
       email: true,
       isActive: true,

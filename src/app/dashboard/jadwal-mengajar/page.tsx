@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { kelasTombol } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { LABEL_SKEMA } from "@/app/(publik)/pendaftaran/pilihan";
+import { LABEL_SKEMA_OPP } from "@/app/(publik)/pendaftaran/pilihan";
 import { wajibRole } from "@/lib/auth/dal";
 import { cn } from "@/lib/cn";
 import { prisma } from "@/lib/prisma";
@@ -114,7 +114,7 @@ export default async function HalamanJadwalMengajar({ searchParams }: PageProps<
                     </p>
                     <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">
                       <span className="font-mono">{k.kodeKegiatan}</span>
-                      <span>OPP {LABEL_SKEMA[k.skemaOpp]}</span>
+                      <span>OPP {LABEL_SKEMA_OPP[k.skemaOpp]}</span>
                       <span className="inline-flex items-center gap-1">
                         <MapPin className="size-3.5" aria-hidden />
                         {k.tempatOpp}
