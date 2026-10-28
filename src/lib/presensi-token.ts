@@ -6,6 +6,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 // yang dikirim ke grup tidak bisa dipakai presensi dari luar kelas.
 // Setelah QR dipindai, CPMI mendapat "izin" yang berlaku cukup lama untuk
 // mengisi data dan tanda tangan.
+//
+// Cadangan bila peserta tidak bisa memindai QR (kamera rusak, dsb.): tautan
+// presensi tetap yang dibagikan pengelola kelas. Tautan tidak kedaluwarsa per
+// menit, tetapi presensi tetap hanya dibuka pada hari pelaksanaan dan CPMI
+// tetap harus terdaftar sebagai peserta.
 
 const JENDELA_MS = 60_000;
 const DURASI_IZIN_MS = 20 * 60_000;
@@ -35,6 +40,15 @@ export function kodeQr(idKegiatan: string, sekarang = Date.now()): string {
 export function cekKodeQr(idKegiatan: string, kode: string, sekarang = Date.now()): boolean {
   const j = jendela(sekarang);
   return [j, j - 1].some((n) => sama(kode, tandai(`qr:${idKegiatan}:${n}`)));
+}
+
+/** Kode tautan presensi cadangan, tetap untuk satu kegiatan. */
+export function kodeTautan(idKegiatan: string): string {
+  return tandai(`tautan:${idKegiatan}`);
+}
+
+export function cekKodeTautan(idKegiatan: string, kode: string): boolean {
+  return sama(kode, kodeTautan(idKegiatan));
 }
 
 /** Izin mengisi presensi: "<kedaluwarsa>.<tanda>". */

@@ -19,6 +19,7 @@ export type BarisPegawai = {
   nip: string;
   namaLengkap: string;
   jabatan: string | null;
+  pangkatGolongan: string | null;
   noWhatsapp: string | null;
   email: string;
   isActive: boolean;
@@ -261,6 +262,16 @@ function ModalPegawai({ pegawai, diriSendiri, onTutup }: PropsModal) {
               maxLength={100}
               aria-invalid={!!e?.jabatan || undefined}
               aria-describedby={idPesanField("jabatan")}
+            />
+          </Field>
+          <Field htmlFor="pangkatGolongan" label="Pangkat / Golongan" error={e?.pangkatGolongan} hint="Untuk SPT, contoh: Pembina / IV.a">
+            <Input
+              id="pangkatGolongan"
+              name="pangkatGolongan"
+              defaultValue={pegawai?.pangkatGolongan ?? ""}
+              maxLength={100}
+              aria-invalid={!!e?.pangkatGolongan || undefined}
+              aria-describedby={idPesanField("pangkatGolongan")}
             />
           </Field>
           <Field htmlFor="email" label="Email" wajib error={e?.email}>

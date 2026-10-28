@@ -1,20 +1,21 @@
 "use client";
 
 import { Send } from "lucide-react";
-import { startTransition, useActionState, useEffect, useRef, type ReactNode } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Field, idPesanField } from "@/components/ui/field";
 import { Checkbox, Input, Select, Textarea } from "@/components/ui/input";
 import { daftarCpmi, type FieldCpmi } from "./actions";
-import { LABEL_SEKTOR, LABEL_SKEMA, PENDIDIKAN, SARAN_KABUPATEN_LAMPUNG, SARAN_NEGARA } from "./pilihan";
+import { LABEL_SEKTOR, LABEL_SKEMA, PENDIDIKAN, PROVINSI, SARAN_KABUPATEN_LAMPUNG, SARAN_NEGARA } from "./pilihan";
 
 type PropsForm = { noPaspor: string; hariIni: string; batasJadwal: string };
 
 export function FormPendaftaran({ noPaspor, hariIni, batasJadwal }: PropsForm) {
   const [state, action, pending] = useActionState(daftarCpmi, undefined);
   const refForm = useRef<HTMLFormElement>(null);
+  const [provinsi, setProvinsi] = useState("");
   const e = state?.errors;
 
   // Setelah validasi gagal, bawa pengguna ke isian pertama yang salah.
@@ -93,10 +94,17 @@ export function FormPendaftaran({ noPaspor, hariIni, batasJadwal }: PropsForm) {
           <Textarea {...isian("alamatLengkap")} rows={2} maxLength={1000} autoComplete="street-address" />
         </Field>
         <Field htmlFor="provinsi" label="Provinsi" wajib error={e?.provinsi}>
-          <Input {...isian("provinsi")} defaultValue="Lampung" maxLength={100} />
+          <Select {...isian("provinsi")} defaultValue="" onChange={(ev) => setProvinsi(ev.target.value)}>
+            <option value="" disabled>
+              Pilih provinsi
+            </option>
+            {PROVINSI.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </Select>
         </Field>
         <Field htmlFor="kabupatenKota" label="Kabupaten / Kota" wajib error={e?.kabupatenKota}>
-          <Input {...isian("kabupatenKota")} list="saran-kabupaten" maxLength={100} />
+          <Input {...isian("kabupatenKota")} list={provinsi === "Lampung" ? "saran-kabupaten" : undefined} maxLength={100} />
           <datalist id="saran-kabupaten">
             {SARAN_KABUPATEN_LAMPUNG.map((k) => (
               <option key={k} value={k} />
@@ -144,8 +152,8 @@ export function FormPendaftaran({ noPaspor, hariIni, batasJadwal }: PropsForm) {
         <Field htmlFor="namaPenggunaJasa" label="Nama Pengguna Jasa" wajib error={e?.namaPenggunaJasa} hint="Nama majikan atau perusahaan.">
           <Input {...isian("namaPenggunaJasa")} maxLength={150} />
         </Field>
-        <Field htmlFor="gaji" label="Gaji per Bulan" wajib error={e?.gaji} hint="Dalam mata uang negara penempatan, contoh: 20.000">
-          <Input {...isian("gaji")} inputMode="decimal" maxLength={20} />
+        <Field htmlFor="gaji" label="Gaji per Bulan" wajib error={e?.gaji} hint="Tulis beserta mata uangnya, contoh: NT$ 25.000 atau RM 1.800">
+          <Input {...isian("gaji")} maxLength={100} />
         </Field>
         <Field htmlFor="alamatPenggunaJasa" label="Alamat Pengguna Jasa" wajib error={e?.alamatPenggunaJasa} className="sm:col-span-2">
           <Textarea {...isian("alamatPenggunaJasa")} rows={2} maxLength={1000} />

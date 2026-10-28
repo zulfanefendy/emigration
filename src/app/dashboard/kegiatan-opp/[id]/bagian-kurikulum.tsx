@@ -14,9 +14,6 @@ import { menitDariJam } from "@/lib/tanggal";
 import { hapusKurikulum, simpanKurikulum } from "../actions";
 import type { OpsiPegawai } from "../form-kegiatan";
 
-/** 1 JP diklat = 45 menit; dipakai untuk menyarankan jam selesai. */
-const MENIT_PER_JP = 45;
-
 export type SesiKurikulum = {
   idKurikulum: number;
   idMateri: number;
@@ -33,6 +30,8 @@ export type OpsiMateri = { idMateri: number; kodeMateri: string; judulMateri: st
 
 type Props = {
   idKegiatanOpp: string;
+  /** Panjang 1 JP sesuai skema kegiatan (P to P 45 menit, Mandiri 30 menit). */
+  menitPerJp: number;
   bolehUbah: boolean;
   sesi: SesiKurikulum[];
   materi: OpsiMateri[];
@@ -44,7 +43,7 @@ function tambahMenit(jam: string, menit: number) {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
-export function BagianKurikulum({ idKegiatanOpp, bolehUbah, sesi, materi, instruktur }: Props) {
+export function BagianKurikulum({ idKegiatanOpp, menitPerJp, bolehUbah, sesi, materi, instruktur }: Props) {
   const [sasaran, setSasaran] = useState<SesiKurikulum | "baru" | null>(null);
   const [memproses, mulai] = useTransition();
   const { konfirmasi, elemenKonfirmasi } = useKonfirmasi();
@@ -64,7 +63,9 @@ export function BagianKurikulum({ idKegiatanOpp, bolehUbah, sesi, materi, instru
     <Card>
       <CardHeader
         judul="Kurikulum & Instruktur"
-        deskripsi={sesi.length ? `${sesi.length} sesi · ${totalJp} JP` : "Susun materi, instruktur, dan jamnya."}
+        deskripsi={
+          sesi.length ? `${sesi.length} sesi · ${totalJp} JP · 1 JP = ${menitPerJp} menit` : `Susun materi, instruktur, dan jamnya. 1 JP = ${menitPerJp} menit.`
+        }
         aksi={
           bolehUbah && (
             <Button ukuran="sm" ikon={<Plus />} onClick={() => setSasaran("baru")}>
@@ -125,6 +126,7 @@ export function BagianKurikulum({ idKegiatanOpp, bolehUbah, sesi, materi, instru
       {sasaran && (
         <ModalSesi
           idKegiatanOpp={idKegiatanOpp}
+          menitPerJp={menitPerJp}
           sesi={sasaran === "baru" ? null : sasaran}
           jamAwal={sesi.at(-1)?.jamSelesai || "08:00"}
           materi={materi}
@@ -139,6 +141,7 @@ export function BagianKurikulum({ idKegiatanOpp, bolehUbah, sesi, materi, instru
 
 type PropsModal = {
   idKegiatanOpp: string;
+  menitPerJp: number;
   sesi: SesiKurikulum | null;
   jamAwal: string;
   materi: OpsiMateri[];
@@ -146,7 +149,7 @@ type PropsModal = {
   onTutup: () => void;
 };
 
-function ModalSesi({ idKegiatanOpp, sesi, jamAwal, materi, instruktur, onTutup }: PropsModal) {
+function ModalSesi({ idKegiatanOpp, menitPerJp, sesi, jamAwal, materi, instruktur, onTutup }: PropsModal) {
   const [state, action, pending] = useActionState(simpanKurikulum, undefined);
   const e = state?.errors;
 
@@ -164,7 +167,7 @@ function ModalSesi({ idKegiatanOpp, sesi, jamAwal, materi, instruktur, onTutup }
 
   function sarankan(id: string, mulai: string) {
     const m = opsiMateri.find((o) => String(o.idMateri) === id);
-    if (!selesaiManual && m && mulai) setJamSelesai(tambahMenit(mulai, m.durasiJamPelajaran * MENIT_PER_JP));
+    if (!selesaiManual && m && mulai) setJamSelesai(tambahMenit(mulai, m.durasiJamPelajaran * menitPerJp));
   }
 
   useEffect(() => {
@@ -262,7 +265,7 @@ function ModalSesi({ idKegiatanOpp, sesi, jamAwal, materi, instruktur, onTutup }
             label="Jam Selesai"
             wajib
             error={e?.jamSelesai}
-            hint={selesaiManual ? undefined : `Otomatis ${MENIT_PER_JP} menit per JP.`}
+            hint={selesaiManual ? undefined : `Otomatis ${menitPerJp} menit per JP.`}
           >
             <Input
               type="time"

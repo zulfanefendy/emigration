@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { isDuplikat, teksOpsional, type StateForm } from "@/lib/form";
 import { cekFormatPaspor } from "@/lib/paspor";
 import { hariIniWib, isHariKerja, keTanggalDb, tambahHari } from "@/lib/tanggal";
-import { BATAS_HARI_JADWAL, PENDIDIKAN } from "./pilihan";
+import { BATAS_HARI_JADWAL, PENDIDIKAN, PROVINSI } from "./pilihan";
 
 // Modul 1: pendaftaran CPMI tanpa login.
 // Alur (Flow Chart PM): cek paspor -> formulir -> simpan + nomor antrean -> tiket PDF.
@@ -88,7 +88,7 @@ const SkemaCpmi = z.object({
   ),
   jenisKelamin: z.enum(["L", "P"], { error: "Pilih jenis kelamin." }),
   alamatLengkap: teks("Alamat", 1000, 10),
-  provinsi: teks("Provinsi", 100),
+  provinsi: z.enum(PROVINSI, { error: "Pilih provinsi." }),
   kabupatenKota: teks("Kabupaten/kota", 100),
   noWhatsapp: z
     .string({ error: "Nomor WhatsApp wajib diisi." })
@@ -103,15 +103,8 @@ const SkemaCpmi = z.object({
   jenisPekerjaan: teks("Jenis pekerjaan", 150),
   namaPenggunaJasa: teks("Nama pengguna jasa", 150),
   alamatPenggunaJasa: teks("Alamat pengguna jasa", 1000, 5),
-  gaji: z
-    .string({ error: "Gaji wajib diisi." })
-    .transform((s) => s.replace(/[.\s]/g, "").replace(",", "."))
-    .pipe(
-      z
-        .string()
-        .regex(/^\d{1,13}(\.\d{1,2})?$/, { error: "Gaji berupa angka, contoh: 25000." })
-        .refine((s) => Number(s) > 0, { error: "Gaji harus lebih dari 0." }),
-    ),
+  // Teks bebas agar mata uang ikut tertulis; cukup pastikan ada nominalnya.
+  gaji: teks("Gaji", 100).regex(/\d/, { error: "Sertakan nominal gaji, contoh: NT$ 25.000." }),
 
   tanggalRencanaVerifikasi: tanggalIso("Tanggal verifikasi").superRefine((t, ctx) => {
     const hariIni = hariIniWib();

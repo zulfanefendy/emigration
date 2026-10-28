@@ -9,7 +9,7 @@ import { hariIniWib, dariTanggalDb } from "@/lib/tanggal";
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const pegawaiRingkas = { select: { idPegawai: true, namaLengkap: true, nip: true, jabatan: true } } as const;
+const pegawaiRingkas = { select: { idPegawai: true, namaLengkap: true, nip: true, jabatan: true, pangkatGolongan: true } } as const;
 
 const isiKegiatan = {
   pengelolaKelas: pegawaiRingkas,
@@ -33,6 +33,14 @@ const isiKegiatan = {
           negaraPenempatan: true,
           jenisPekerjaan: true,
           kabupatenKota: true,
+          // Untuk lampiran nominatif SK.
+          tempatLahir: true,
+          tanggalLahir: true,
+          alamatLengkap: true,
+          provinsi: true,
+          namaPenggunaJasa: true,
+          alamatPenggunaJasa: true,
+          gaji: true,
         },
       },
     },

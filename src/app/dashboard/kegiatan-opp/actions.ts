@@ -7,8 +7,10 @@ import type { Prisma } from "@/generated/prisma/client";
 import { wajibRole } from "@/lib/auth/dal";
 import type { Role } from "@/lib/auth/role";
 import { isDuplikat, teksOpsional, type StateForm } from "@/lib/form";
+import { POLA_NOMOR_URUT } from "@/lib/nomor-dokumen";
 import { prisma } from "@/lib/prisma";
 import { dariJamDb, dariTanggalDb, hariIniWib, keJamDb, keTanggalDb, menitDariJam } from "@/lib/tanggal";
+import { SKEMA_CPMI_OPP } from "@/app/(publik)/pendaftaran/pilihan";
 import { UUID } from "./data";
 
 // Flow Chart PM bagian 3: buat kegiatan & pilih tim, set kurikulum (materi +
@@ -49,7 +51,7 @@ const idOpsional = z
 
 const SkemaKegiatan = z.object({
   tanggalPelaksanaan: z.iso.date({ error: "Tanggal pelaksanaan wajib diisi." }),
-  skemaOpp: z.enum(["P_TO_P", "MANDIRI_REGULER", "MANDIRI_SSW"], { error: "Pilih skema OPP." }),
+  skemaOpp: z.enum(["P_TO_P", "MANDIRI"], { error: "Pilih skema OPP." }),
   tempatOpp: z
     .string({ error: "Tempat wajib diisi." })
     .trim()
@@ -304,8 +306,8 @@ export async function hapusKurikulum(idKegiatan: string, idKurikulum: number): P
 // =============================================================================
 
 /**
- * Tambahkan CPMI yang sudah diverifikasi, skemanya sama dengan kegiatan, dan
- * belum terdaftar di kegiatan OPP lain.
+ * Tambahkan CPMI yang sudah diverifikasi, skemanya sesuai kegiatan (OPP Mandiri
+ * menerima Mandiri Reguler dan SSW), dan belum terdaftar di kegiatan OPP lain.
  */
 export async function tambahPeserta(idKegiatan: string, idCpmi: string[]): Promise<Hasil> {
   await wajibRole("PENGELOLA_KELAS");
@@ -325,7 +327,7 @@ export async function tambahPeserta(idKegiatan: string, idCpmi: string[]): Promi
     const layak = await tx.cpmi.findMany({
       where: {
         idCpmi: { in: daftar },
-        skemaPendaftaran: k.skemaOpp,
+        skemaPendaftaran: { in: SKEMA_CPMI_OPP[k.skemaOpp] },
         verifikasi: { some: { statusVerifikasi: "SUDAH_SELESAI" } },
         pesertaOpp: { none: {} },
       },
@@ -370,30 +372,43 @@ export async function keluarkanPeserta(idKegiatan: string, idCpmi: string): Prom
 // Nomor SK & SPT
 // =============================================================================
 
-const nomor = z.string().trim().max(100, { error: "Maksimal 100 karakter." }).optional();
-const SkemaNomor = z.object({ noSkOpp: nomor, noSptInstruktur: nomor, noSptPengelola: nomor });
+const nomor = z
+  .string()
+  .trim()
+  .regex(POLA_NOMOR_URUT, { error: "Isi nomor urutnya saja (angka), contoh: 1647." })
+  .optional();
+const SkemaNomor = z.object({
+  tanggalSurat: z.iso.date({ error: "Tanggal surat tidak valid." }).optional(),
+  noSkOpp: nomor,
+  noSptInstruktur: nomor,
+  noSptPengelola: nomor,
+});
 
 export type FieldNomor = keyof z.infer<typeof SkemaNomor>;
 export type StateNomor = StateForm<FieldNomor>;
 
+/** Simpan nomor urut SK/SPT; format lengkapnya dibuat saat ditampilkan (lib/nomor-dokumen). */
 export async function simpanNomorDokumen(_state: StateNomor | undefined, formData: FormData): Promise<StateNomor> {
   await wajibRole("PENGELOLA_KELAS");
   const idKegiatan = String(formData.get("idKegiatanOpp") ?? "");
   if (!UUID.test(idKegiatan)) return { pesan: "Kegiatan tidak ditemukan." };
 
   const hasil = SkemaNomor.safeParse({
+    tanggalSurat: teksOpsional(formData.get("tanggalSurat")),
     noSkOpp: teksOpsional(formData.get("noSkOpp")),
     noSptInstruktur: teksOpsional(formData.get("noSptInstruktur")),
     noSptPengelola: teksOpsional(formData.get("noSptPengelola")),
   });
   if (!hasil.success) return { errors: z.flattenError(hasil.error).fieldErrors };
+  const d = hasil.data;
 
   const { count } = await prisma.kegiatanOpp.updateMany({
     where: { idKegiatanOpp: idKegiatan },
     data: {
-      noSkOpp: hasil.data.noSkOpp ?? null,
-      noSptInstruktur: hasil.data.noSptInstruktur ?? null,
-      noSptPengelola: hasil.data.noSptPengelola ?? null,
+      tanggalSurat: d.tanggalSurat ? keTanggalDb(d.tanggalSurat) : null,
+      noSkOpp: d.noSkOpp ?? null,
+      noSptInstruktur: d.noSptInstruktur ?? null,
+      noSptPengelola: d.noSptPengelola ?? null,
     },
   });
   if (count === 0) return { pesan: "Kegiatan tidak ditemukan." };

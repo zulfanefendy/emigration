@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { LABEL_SKEMA } from "@/app/(publik)/pendaftaran/pilihan";
+import { LABEL_SKEMA, LABEL_SKEMA_OPP, MENIT_PER_JP, SKEMA_CPMI_OPP } from "@/app/(publik)/pendaftaran/pilihan";
 import { wajibRole } from "@/lib/auth/dal";
 import { punyaAkses } from "@/lib/auth/role";
 import { prisma } from "@/lib/prisma";
@@ -44,18 +44,18 @@ export default async function HalamanDetailKegiatan({ params }: PageProps<"/dash
           select: { idMateri: true, kodeMateri: true, judulMateri: true, durasiJamPelajaran: true },
         })
       : [],
-    // CPMI yang siap ikut OPP: sudah diverifikasi, skema sama, belum masuk kegiatan mana pun.
+    // CPMI yang siap ikut OPP: sudah diverifikasi, skema sesuai, belum masuk kegiatan mana pun.
     // Juga dipakai sebagai penanda "verifikasi susulan" sebelum data dikunci.
     !k.isCpmiFinal
       ? prisma.cpmi.findMany({
           where: {
-            skemaPendaftaran: k.skemaOpp,
+            skemaPendaftaran: { in: SKEMA_CPMI_OPP[k.skemaOpp] },
             verifikasi: { some: { statusVerifikasi: "SUDAH_SELESAI" } },
             pesertaOpp: { none: {} },
           },
           orderBy: { namaLengkap: "asc" },
           take: 500,
-          select: { idCpmi: true, namaLengkap: true, noPaspor: true, negaraPenempatan: true },
+          select: { idCpmi: true, namaLengkap: true, noPaspor: true, negaraPenempatan: true, skemaPendaftaran: true },
         })
       : [],
   ]);
@@ -63,7 +63,7 @@ export default async function HalamanDetailKegiatan({ params }: PageProps<"/dash
   const ringkasan: [string, string][] = [
     ["Tanggal", formatTanggal(k.tanggalPelaksanaan)],
     ["Tempat", k.tempatOpp],
-    ["Skema", LABEL_SKEMA[k.skemaOpp]],
+    ["Skema", LABEL_SKEMA_OPP[k.skemaOpp]],
     ["Pengelola Kelas", k.pengelolaKelas?.namaLengkap ?? "Belum ditentukan"],
     ["Penanggung Jawab", k.penanggungJawab?.namaLengkap ?? "Belum ditentukan"],
   ];
@@ -105,6 +105,7 @@ export default async function HalamanDetailKegiatan({ params }: PageProps<"/dash
         <div className="flex min-w-0 flex-col gap-6">
           <BagianKurikulum
             idKegiatanOpp={k.idKegiatanOpp}
+            menitPerJp={MENIT_PER_JP[k.skemaOpp]}
             bolehUbah={bolehUbahData}
             materi={materi}
             instruktur={instruktur}
@@ -131,7 +132,8 @@ export default async function HalamanDetailKegiatan({ params }: PageProps<"/dash
                 presensi: hadir ? { jam: formatJam(hadir.waktuScan), toolkit: hadir.terimaToolkit, konsumsi: hadir.terimaKonsumsi } : null,
               };
             })}
-            calon={calonPeserta}
+            skema={LABEL_SKEMA_OPP[k.skemaOpp]}
+            calon={calonPeserta.map(({ skemaPendaftaran, ...c }) => ({ ...c, skema: LABEL_SKEMA[skemaPendaftaran] }))}
           />
         </div>
 
@@ -170,6 +172,8 @@ export default async function HalamanDetailKegiatan({ params }: PageProps<"/dash
           <BagianDokumen
             idKegiatanOpp={k.idKegiatanOpp}
             bolehUbah={bolehUbah}
+            tanggalPelaksanaan={tanggal}
+            tanggalSurat={k.tanggalSurat ? dariTanggalDb(k.tanggalSurat) : null}
             noSkOpp={k.noSkOpp}
             noSptInstruktur={k.noSptInstruktur}
             noSptPengelola={k.noSptPengelola}

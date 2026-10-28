@@ -17,6 +17,7 @@ const SkemaPegawai = z.object({
     .min(3, { error: "Nama lengkap minimal 3 karakter." })
     .max(150, { error: "Nama lengkap maksimal 150 karakter." }),
   jabatan: z.string().max(100, { error: "Jabatan maksimal 100 karakter." }).optional(),
+  pangkatGolongan: z.string().max(100, { error: "Pangkat/golongan maksimal 100 karakter." }).optional(),
   noWhatsapp: z
     .string()
     .transform(normalisasiNomorWa)
@@ -39,6 +40,7 @@ export async function simpanPegawai(_state: StatePegawai | undefined, formData: 
     nip: formData.get("nip"),
     namaLengkap: formData.get("namaLengkap"),
     jabatan: teksOpsional(formData.get("jabatan")),
+    pangkatGolongan: teksOpsional(formData.get("pangkatGolongan")),
     noWhatsapp: teksOpsional(formData.get("noWhatsapp")),
     email: formData.get("email"),
     password: teksOpsional(formData.get("password")),
@@ -72,6 +74,7 @@ export async function simpanPegawai(_state: StatePegawai | undefined, formData: 
   const isiPegawai = {
     ...data,
     jabatan: data.jabatan ?? null,
+    pangkatGolongan: data.pangkatGolongan ?? null,
     noWhatsapp: data.noWhatsapp ?? null,
     ...(password && { passwordHash: await bcrypt.hash(password, 12) }),
   };

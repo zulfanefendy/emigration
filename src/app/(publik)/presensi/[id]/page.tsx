@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
-import { LABEL_SKEMA } from "@/app/(publik)/pendaftaran/pilihan";
-import { buatIzin, cekKodeQr } from "@/lib/presensi-token";
+import { LABEL_SKEMA_OPP } from "@/app/(publik)/pendaftaran/pilihan";
+import { buatIzin, cekKodeQr, cekKodeTautan } from "@/lib/presensi-token";
 import { formatTanggal } from "@/lib/tanggal";
 import { AlurPresensi } from "./alur-presensi";
 import { alasanTutup, ambilKegiatanPresensi } from "./data";
@@ -13,19 +13,20 @@ export const metadata: Metadata = { title: "Presensi OPP", robots: { index: fals
 
 export default async function HalamanPresensi({ params, searchParams }: PageProps<"/presensi/[id]">) {
   const { id } = await params;
-  const { k: kode } = await searchParams;
+  const { k: kode, t: tautan } = await searchParams;
   const kegiatan = await ambilKegiatanPresensi(id);
   if (!kegiatan) notFound();
 
   const tutup = await alasanTutup(id);
-  const qrBerlaku = typeof kode === "string" && cekKodeQr(id, kode);
+  // ?k= dari QR (berganti tiap menit), ?t= dari tautan cadangan yang dibagikan pengelola kelas.
+  const qrBerlaku = (typeof kode === "string" && cekKodeQr(id, kode)) || (typeof tautan === "string" && cekKodeTautan(id, tautan));
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-8 sm:py-12">
       <Card className="mb-6 overflow-hidden">
         <div className="bg-sidebar px-5 py-4 text-white">
           <p className="text-xs font-semibold tracking-[0.16em] text-aksen uppercase">Presensi OPP · BP3MI Lampung</p>
-          <p className="mt-0.5 font-semibold">Orientasi Pra Penempatan {LABEL_SKEMA[kegiatan.skemaOpp]}</p>
+          <p className="mt-0.5 font-semibold">Orientasi Pra Penempatan {LABEL_SKEMA_OPP[kegiatan.skemaOpp]}</p>
         </div>
         <div className="px-5 py-3 text-sm text-fg-muted">
           <p className="font-medium text-fg">{formatTanggal(kegiatan.tanggalPelaksanaan)}</p>
@@ -43,7 +44,7 @@ export default async function HalamanPresensi({ params, searchParams }: PageProp
         <Alert jenis="peringatan" judul="QR sudah kedaluwarsa">
           <span className="inline-flex items-start gap-1.5">
             <QrCode className="mt-0.5 size-4 shrink-0" aria-hidden />
-            QR presensi berganti setiap menit. Pindai ulang QR yang tampil di layar kelas.
+            QR presensi berganti setiap menit. Pindai ulang QR yang tampil di layar kelas, atau minta tautan presensi ke pengelola kelas.
           </span>
         </Alert>
       ) : (

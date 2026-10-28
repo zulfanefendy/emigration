@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { ChevronRight, Plus, Search } from "lucide-react";
 import { useState } from "react";
-import type { SkemaPendaftaran } from "@/generated/prisma/enums";
+import type { SkemaOpp } from "@/generated/prisma/enums";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableKosong, Td, Th, THead, Tr } from "@/components/ui/table";
 import { cn } from "@/lib/cn";
 import { formatTanggal, keTanggalDb } from "@/lib/tanggal";
-import { LABEL_SKEMA } from "@/app/(publik)/pendaftaran/pilihan";
+import { LABEL_SKEMA_OPP } from "@/app/(publik)/pendaftaran/pilihan";
 import { BadgeTahap } from "./badge-tahap";
 import type { TahapKegiatan } from "./data";
 import { ModalKegiatan, type OpsiPegawai } from "./form-kegiatan";
@@ -19,7 +19,7 @@ export type BarisKegiatan = {
   idKegiatanOpp: string;
   kodeKegiatan: string;
   tanggalPelaksanaan: string;
-  skemaOpp: SkemaPendaftaran;
+  skemaOpp: SkemaOpp;
   tempatOpp: string;
   jumlahPeserta: number;
   jumlahSesi: number;
@@ -130,7 +130,7 @@ export function DaftarKegiatan({ kegiatan, bolehUbah, hariIni, pengelola, penang
                   <p className="font-medium">{formatTanggal(keTanggalDb(k.tanggalPelaksanaan))}</p>
                   <p className="text-xs text-fg-muted">{k.tempatOpp}</p>
                 </Td>
-                <Td className="whitespace-nowrap">{LABEL_SKEMA[k.skemaOpp]}</Td>
+                <Td className="whitespace-nowrap">{LABEL_SKEMA_OPP[k.skemaOpp]}</Td>
                 <Td className="text-right">{k.jumlahSesi}</Td>
                 <Td className="text-right">{k.jumlahPeserta}</Td>
                 <Td>

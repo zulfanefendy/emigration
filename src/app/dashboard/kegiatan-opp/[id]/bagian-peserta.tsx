@@ -22,12 +22,14 @@ type Peserta = {
   presensi: { jam: string; toolkit: boolean; konsumsi: boolean } | null;
 };
 
-type Calon = { idCpmi: string; namaLengkap: string; noPaspor: string; negaraPenempatan: string };
+type Calon = { idCpmi: string; namaLengkap: string; noPaspor: string; negaraPenempatan: string; skema: string };
 
 type Props = {
   idKegiatanOpp: string;
   bolehUbah: boolean;
   final: boolean;
+  /** Label skema OPP kegiatan ini. */
+  skema: string;
   peserta: Peserta[];
   calon: Calon[];
 };
@@ -35,7 +37,7 @@ type Props = {
 const cocokKata = (kata: string) => (c: { namaLengkap: string; noPaspor: string }) =>
   !kata || c.namaLengkap.toLowerCase().includes(kata) || c.noPaspor.toLowerCase().includes(kata);
 
-export function BagianPeserta({ idKegiatanOpp, bolehUbah, final, peserta, calon }: Props) {
+export function BagianPeserta({ idKegiatanOpp, bolehUbah, final, skema, peserta, calon }: Props) {
   const [cari, setCari] = useState("");
   const [modal, setModal] = useState(false);
   const [memproses, mulai] = useTransition();
@@ -62,7 +64,7 @@ export function BagianPeserta({ idKegiatanOpp, bolehUbah, final, peserta, calon 
         deskripsi={
           peserta.length
             ? `${laki} laki-laki · ${peserta.length - laki} perempuan · ${hadir} sudah presensi`
-            : "CPMI yang sudah diverifikasi dengan skema yang sama."
+            : `CPMI skema ${skema} yang sudah diverifikasi.`
         }
         aksi={
           <>
@@ -154,7 +156,7 @@ export function BagianPeserta({ idKegiatanOpp, bolehUbah, final, peserta, calon 
         </tbody>
       </Table>
 
-      {modal && <ModalTambahPeserta idKegiatanOpp={idKegiatanOpp} calon={calon} onTutup={() => setModal(false)} />}
+      {modal && <ModalTambahPeserta idKegiatanOpp={idKegiatanOpp} skema={skema} calon={calon} onTutup={() => setModal(false)} />}
       {elemenKonfirmasi}
     </Card>
   );
@@ -171,7 +173,7 @@ function Tanda({ ya, label }: { ya: boolean; label: string }) {
   );
 }
 
-function ModalTambahPeserta({ idKegiatanOpp, calon, onTutup }: { idKegiatanOpp: string; calon: Calon[]; onTutup: () => void }) {
+function ModalTambahPeserta({ idKegiatanOpp, skema, calon, onTutup }: { idKegiatanOpp: string; skema: string; calon: Calon[]; onTutup: () => void }) {
   const [cari, setCari] = useState("");
   const [dipilih, setDipilih] = useState<Set<string>>(new Set());
   const [memproses, mulai] = useTransition();
@@ -214,7 +216,7 @@ function ModalTambahPeserta({ idKegiatanOpp, calon, onTutup }: { idKegiatanOpp: 
       onTutup={onTutup}
       ukuran="lg"
       judul="Tambah Peserta"
-      deskripsi="CPMI yang sudah diverifikasi, skemanya sama, dan belum terdaftar di kegiatan OPP lain."
+      deskripsi={`CPMI skema ${skema} yang sudah diverifikasi dan belum terdaftar di kegiatan OPP lain.`}
       footer={
         <>
           <Button varian="outline" onClick={onTutup}>
@@ -227,7 +229,10 @@ function ModalTambahPeserta({ idKegiatanOpp, calon, onTutup }: { idKegiatanOpp: 
       }
     >
       {calon.length === 0 ? (
-        <Alert jenis="info">Belum ada CPMI yang siap didaftarkan. CPMI muncul di sini setelah berkasnya selesai diverifikasi di loket.</Alert>
+        <Alert jenis="info">
+          Belum ada CPMI skema {skema} yang siap didaftarkan. CPMI muncul di sini setelah berkasnya selesai diverifikasi di loket
+          {skema === "Mandiri" ? " (Mandiri Reguler maupun Mandiri SSW)" : ""}.
+        </Alert>
       ) : (
         <div className="flex flex-col gap-3">
           <div className="relative">
@@ -247,7 +252,10 @@ function ModalTambahPeserta({ idKegiatanOpp, calon, onTutup }: { idKegiatanOpp: 
                     <span className="block font-medium text-fg">{c.namaLengkap}</span>
                     <span className="block font-mono text-xs text-fg-muted">{c.noPaspor}</span>
                   </span>
-                  <span className="text-sm text-fg-muted">{c.negaraPenempatan}</span>
+                  <span className="text-right text-sm text-fg-muted">
+                    {c.negaraPenempatan}
+                    <span className="block text-xs">{c.skema}</span>
+                  </span>
                 </label>
               </li>
             ))}
